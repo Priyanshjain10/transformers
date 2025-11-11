@@ -196,10 +196,15 @@ class NotebookProgressBar:
             # If this is a child bar, the parent will take care of the display.
             self.parent.display()
             return
-        if self.output is None:
-            self.output = disp.display(disp.HTML(self.html_code), display_id=True)
-        else:
-            self.output.update(disp.HTML(self.html_code))
+        try:
+            if self.output is None:
+                self.output = disp.display(disp.HTML(self.html_code), display_id=True)
+            else:
+                self.output.update(disp.HTML(self.html_code))
+        except (IsADirectoryError, TypeError, ValueError, AttributeError):
+            # Gracefully handle IPython display failures in certain environments (Azure ML, etc.)
+            # This prevents training from crashing due to notebook progress bar display issues
+            pass
 
     def close(self):
         "Closes the progress bar."
@@ -228,10 +233,14 @@ class NotebookTrainingTracker(NotebookProgressBar):
             self.html_code += text_to_html_table(self.inner_table)
         if self.child_bar is not None:
             self.html_code += self.child_bar.html_code
-        if self.output is None:
-            self.output = disp.display(disp.HTML(self.html_code), display_id=True)
-        else:
-            self.output.update(disp.HTML(self.html_code))
+        try:
+            if self.output is None:
+                self.output = disp.display(disp.HTML(self.html_code), display_id=True)
+            else:
+                self.output.update(disp.HTML(self.html_code))
+        except (IsADirectoryError, TypeError, ValueError, AttributeError):
+            # Gracefully handle IPython display failures in certain environments (Azure ML, etc.)
+            pass
 
     def write_line(self, values):
         """
